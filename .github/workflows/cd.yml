@@ -27,7 +27,7 @@ jobs:
           ref: ${{ github.head_ref || github.ref_name }}
 
       - name: Incrementar versión
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && github.actor != 'github-actions[bot]'
         shell: bash
         run: |
           version=$(grep -oP 'AppVersion-\K[0-9]+' README.md | head -1)
@@ -37,7 +37,7 @@ jobs:
           echo "Fecha de actualización: $fecha" >> README.md
 
       - name: Guardar cambios en el repositorio
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && github.actor != 'github-actions[bot]'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
