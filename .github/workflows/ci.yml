@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - develop
+    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  updatereadme:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Anadir feature al README
+        run: |
+          echo "Anadida feature: ${{ github.head_ref }}" >> README.md
+
+            - name: Guardar cambios en el repositorio
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git commit -m "Actualizar README con nueva feature"
+          git push origin HEAD:${{ github.head_ref }}
+
+  validate-dev:
+    needs: updatereadme
+    runs-on: self-hosted
+
+    steps:
+      - name: Validar token de desarrollo
+        shell: powershell
+        run: |
+          if ($env:DEV_TOKEN -eq $env:LOCAL_DEV_TOKEN) {
+            Write-Host "Los tokens coinciden"
+          } else {
+            Write-Host "Los tokens NO coinciden"
+            exit 1
+          }
+        env:
+          DEV_TOKEN: ${{ secrets.DEV_TOKEN }}
