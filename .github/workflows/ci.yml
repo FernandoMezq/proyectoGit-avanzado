@@ -27,12 +27,17 @@ jobs:
           ref: ${{ github.head_ref || github.ref_name }}
 
       - name: Actualizar README con la feature
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && github.actor != 'github-actions[bot]'
+        shell: bash
         run: |
-          echo "Añadida feature: ${{ github.head_ref }}" >> README.md
+          feature="Añadida feature: ${{ github.head_ref }}"
+
+          if ! grep -Fxq "$feature" README.md; then
+            echo "$feature" >> README.md
+          fi
 
       - name: Guardar cambios en el repositorio
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && github.actor != 'github-actions[bot]'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
