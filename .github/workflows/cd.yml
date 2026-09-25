@@ -1,0 +1,63 @@
+name: CD
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  updatereadme:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+
+      - name: Incrementar versión
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          version=$(grep -oP 'AppVersion-\K[0-9]+' README.md | head -1)
+          next_version=$((version + 1))
+          fecha=$(date '+%Y-%m-%d %H:%M:%S')
+          sed -i "s/^AppVersion-$version$/AppVersion-$next_version/" README.md
+          echo "Fecha de actualización: $fecha" >> README.md
+
+      - name: Guardar cambios en el repositorio
+        if: github.event_name == 'push'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git commit -m "Actualizar versión de la aplicación" || exit 0
+          git push origin HEAD:${{ github.ref_name }}
+
+  validate-prod:
+    needs: updatereadme
+    runs-on: self-hosted
+
+    steps:
+      - name: Validar token de producción
+        shell: powershell
+        run: |
+          if ($env:PROD_TOKEN -eq $env:LOCAL_PROD_TOKEN) {
+            Write-Host "Los tokens de producción coinciden"
+          } else {
+            Write-Host "Los tokens de producción NO coinciden"
+            exit 1
+          }
+        env:
+          PROD_TOKEN: ${{ secrets.PROD_TOKEN }}
