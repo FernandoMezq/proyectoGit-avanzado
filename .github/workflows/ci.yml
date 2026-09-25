@@ -25,7 +25,7 @@ jobs:
         run: |
           echo "Anadida feature: ${{ github.head_ref }}" >> README.md
 
-            - name: Guardar cambios en el repositorio
+      - name: Guardar cambios en el repositorio
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
